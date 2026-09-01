@@ -239,6 +239,40 @@ mvn test -Denv=ci
 
 ## Building the WAR
 
+## MongoDB Support
+
+This project already includes integration points for MongoDB in two modes: a native NoSQL loader and JDBC-driver based connections. Follow the steps below to enable and configure MongoDB connectivity.
+
+Modes
+- Native NoSQL: Uses the `NoSQLLoader` implementation registered under bean name `com.helicalinsight.nosql.mongo`. The example implementation is `adhoc` → `MongoDrillLoader` and the code uses the `org.mongodb:mongo-java-driver` library (already declared in `server/pom.xml`). This mode does not require a JDBC driver JAR.
+- JDBC mode: Use a Mongo JDBC driver (third-party) and configure the connection driver class (examples in the repo: `mongodb.jdbc.MongoDriver`, `com.helical.mongodb.MongoJdbcDriver`, or CData's `cdata.jdbc.mongodb.MongoDBDriver`). Place the JDBC JAR in the application server classpath (Tomcat/lib) or the Helical plugins/drivers folder.
+
+Quick configuration (JDBC mode)
+1. Obtain a Mongo JDBC JAR and place it in your runtime classpath (Tomcat/lib or the repository `drivers`/plugins location used by your installation).
+2. In Admin → Global Connections (or by editing `hi-repository/System/Admin/globalConnections.xml`), create a datasource with:
+  - `driver` / `driverClassName`: the JDBC driver class (e.g., `mongodb.jdbc.MongoDriver`)
+  - `jdbcUrl` / `url`: the JDBC URL (use templates in `hi-repository/System/Admin/databaseDrivers.properties`)
+  - `userName` / `password` as required
+3. Test the connection in the Admin UI.
+
+Quick configuration (Native NoSQL mode)
+1. In Admin → Global Connections choose `dataSourceProvider` = `com.helicalinsight.nosql.mongo` (or create a NoSQL datasource and set `subType` to the registered NoSQL subtype).
+2. Provide `jdbcUrl` (or `url`) using the Mongo URI form: `mongodb://<host>:<port>/<database>` and credentials.
+3. Test the connection in Admin — the server will call the `NoSQLLoader.testConnection` implementation.
+
+Notes and troubleshooting
+- The repository includes `server/pom.xml` dependency `org.mongodb:mongo-java-driver` for native driver use. If you prefer JDBC mode, the JDBC driver JAR must be provided at runtime — it is not bundled in this repo.
+- If you see bean name collisions for `com.helicalinsight.nosql.mongo`, ensure only one implementation is present on the classpath.
+- To build and verify the backend after changing drivers or configs:
+
+```bash
+cd server
+mvn clean package -DskipTests
+# copy presentation/target/hi-ee-*.war to Tomcat and start Tomcat
+```
+
+If you want, I can add a sample `globalConnections.xml` snippet or create a non-deprecated NoSQL loader implementation — tell me which and I'll add it.
+
 From the `server/` directory:
 
 ```bash

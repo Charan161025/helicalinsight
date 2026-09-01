@@ -68,8 +68,17 @@ public class MongoConnectionFactory extends DatabaseConnectionFactory {
 			}
 
 			if ("mongodb.jdbc.MongoDriver".equalsIgnoreCase(driverClassName)) {
+				String url = connectionDetails.has("Url") ? connectionDetails.get("Url").getAsString()
+						: connectionDetails.get("jdbcUrl").getAsString();
+				String user = connectionDetails.has("User") ? connectionDetails.get("User").getAsString()
+						: connectionDetails.has("userName") ? connectionDetails.get("userName").getAsString() : "";
+				String password = connectionDetails.has("Pass") ? connectionDetails.get("Pass").getAsString()
+						: connectionDetails.has("password") ? connectionDetails.get("password").getAsString() : "";
+
+				java.sql.Connection sqlConnection = JDBCDriver.getConnection(url, user, password, "mongodb.jdbc.MongoDriver");
+
 				DriverConnection driverConnection = new DriverConnection();
-				driverConnection.setConnection(null);
+				driverConnection.setConnection(sqlConnection);
 				driverConnection.setDriverClass("mongodb.jdbc.MongoDriver");
 				return driverConnection;
 
